@@ -35,9 +35,11 @@ export default function SplashScreen() {
   }, [isLoaded, isSignedIn, isFirstTime]);
 
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="text-4xl font-bold text-blue-600 mb-4">Mimo</Text>
-      <ActivityIndicator size="large" color="#2563EB" />
+    <View className="flex-1 items-center justify-center bg-[#FDFBF7]">
+      <Text className="text-5xl font-light text-[#2D2D2D] mb-8 tracking-widest">
+        Mimo
+      </Text>
+      <ActivityIndicator size="small" color="#8B6D5C" />
     </View>
   );
 }

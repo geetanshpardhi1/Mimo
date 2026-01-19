@@ -1,9 +1,11 @@
-import { useSignIn, useSSO } from "@clerk/clerk-expo";
+import { validateEmail } from "@/lib/validation";
+import { useAuth, useSignIn, useSSO } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -19,24 +21,47 @@ import {
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startSSOFlow } = useSSO();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
   const isFromOnboarding = params.from === "onboarding";
-
-  console.log("SignIn Params:", params);
+  // Check if user is already signed in and redirect
+  React.useEffect(() => {
+    if (isSignedIn) {
+      router.replace("/(tabs)/save");
+    }
+  }, [isSignedIn]);
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const onSignInPress = async () => {
     if (!isLoaded) {
       return;
     }
 
+    // Clear previous errors
+    setEmailError("");
+
+    // Validate email
+    const emailValidation = validateEmail(emailAddress);
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || "");
+      return;
+    }
+
+    if (!password) {
+      Alert.alert("Missing Password", "Please enter your password.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const completeSignIn = await signIn.create({
-        identifier: emailAddress,
+        identifier: emailAddress.trim(),
         password,
       });
       // This indicates the user is signed in.
@@ -45,13 +70,15 @@ export default function SignInScreen() {
       router.replace("/(tabs)/save");
     } catch (err: any) {
       // Use friendly error message
-      Alert.alert(
-        "Sign In Failed",
-        err.errors[0]?.longMessage ||
-          err.errors[0]?.message ||
-          "Please check your credentials."
-      );
+      const errorMessage =
+        err.errors?.[0]?.longMessage ||
+        err.errors?.[0]?.message ||
+        "Invalid email or password. Please try again.";
+
+      Alert.alert("Sign In Failed", errorMessage);
       console.error(JSON.stringify(err, null, 2));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,15 +130,23 @@ export default function SignInScreen() {
               autoCapitalize="none"
               value={emailAddress}
               placeholder="hello@example.com"
-              onChangeText={setEmailAddress}
+              onChangeText={(text) => {
+                setEmailAddress(text);
+                setEmailError("");
+              }}
               placeholderTextColor="#A0A0A0"
-              className="w-full bg-white border border-[#E5E0D8] rounded-2xl px-5 h-14 text-base text-[#2D2D2D]"
+              className={`w-full bg-white border ${emailError ? "border-red-500" : "border-[#E5E0D8]"} rounded-2xl px-5 h-14 text-base text-[#2D2D2D]`}
               style={{ lineHeight: 0 }}
               // Autofill props
               textContentType="emailAddress"
               keyboardType="email-address"
               autoComplete="email"
             />
+            {emailError ? (
+              <Text className="text-red-500 text-sm mt-1 ml-1">
+                {emailError}
+              </Text>
+            ) : null}
           </View>
 
           {/* Password */}
@@ -143,7 +178,10 @@ export default function SignInScreen() {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity className="self-end mb-10">
+          <TouchableOpacity
+            className="self-end mb-10"
+            onPress={() => router.push("/auth/forgot-password")}
+          >
             <Text className="text-[#8B6D5C] font-semibold">
               Forgot password?
             </Text>
@@ -152,14 +190,18 @@ export default function SignInScreen() {
           {/* Sign In Button */}
           <TouchableOpacity
             onPress={onSignInPress}
-            disabled={!emailAddress || !password}
+            disabled={!emailAddress || !password || loading}
             className={`w-full py-4 rounded-full mb-8 items-center justify-center shadow-sm ${
-              !emailAddress || !password
+              !emailAddress || !password || loading
                 ? "bg-[#DCCBC4] shadow-none"
                 : "bg-[#8B6D5C] shadow-orange-100"
             }`}
           >
-            <Text className="text-white text-lg font-bold">Sign In</Text>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white text-lg font-bold">Sign In</Text>
+            )}
           </TouchableOpacity>
 
           {/* Divider */}

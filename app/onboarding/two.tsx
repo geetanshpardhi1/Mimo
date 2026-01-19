@@ -1,23 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useRouter } from "expo-router";
 import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
-import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 export default function OnboardingTwo() {
   const router = useRouter();
-  const [key, setKey] = useState(0);
-  const isFirstMount = useRef(true);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (isFirstMount.current) {
-        isFirstMount.current = false;
-        return;
-      }
-      setKey((prev) => prev + 1);
-    }, [])
-  );
 
   return (
     <SafeAreaView className="flex-1 bg-[#FDFBF7]">
@@ -35,9 +22,8 @@ export default function OnboardingTwo() {
 
           {/* Animated Content */}
           <Animated.View
-            key={key}
-            entering={FadeInDown.duration(600).springify()}
-            exiting={FadeOutDown.duration(600).springify()}
+            entering={FadeIn.duration(400).delay(100)}
+            exiting={FadeOut.duration(300)}
           >
             {/* Content */}
             <View className="mt-4">
