@@ -1,33 +1,49 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs, useRouter } from "expo-router";
+import { TouchableOpacity } from "react-native";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const router = useRouter();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: "blue",
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => router.push("/settings")}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="settings-outline" size={24} color="black" />
+          </TouchableOpacity>
+        ),
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="save"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Save",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="add-circle-outline" size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="recall"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Recall",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="refresh-outline" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="memories"
+        options={{
+          title: "Memories",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="images-outline" size={24} color={color} />
+          ),
         }}
       />
     </Tabs>
