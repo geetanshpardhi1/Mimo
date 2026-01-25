@@ -1,4 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   RefreshControl,
@@ -47,6 +48,7 @@ const MEMORIES = [
 ];
 
 export default function MemoriesScreen() {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(() => {
@@ -82,8 +84,10 @@ export default function MemoriesScreen() {
         {/* Memories List */}
         <View className="gap-4">
           {MEMORIES.map((memory) => (
-            <View
+            <TouchableOpacity
               key={memory.id}
+              activeOpacity={0.9}
+              onPress={() => router.push(`/memory/${memory.id}`)}
               className="bg-white rounded-[24px] p-6 shadow-sm shadow-gray-200 border border-gray-100"
             >
               {/* Card Header: Date & Menu */}
@@ -114,7 +118,7 @@ export default function MemoriesScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>

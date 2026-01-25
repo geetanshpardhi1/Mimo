@@ -38,7 +38,50 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="auth" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              title: "",
+            }}
+          />
+
+          <Stack.Screen
+            name="memory/[id]"
+            options={{
+              headerShown: true,
+              presentation: "formSheet",
+              sheetAllowedDetents: "fitToContents",
+              sheetGrabberVisible: true,
+              headerTitle: "Memory",
+              headerTitleStyle: {
+                fontFamily: "Caveat_700Bold",
+                fontSize: 28,
+                color: "#4A3728",
+              },
+              headerTintColor: "#4A3728",
+              headerBackTitle: "",
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: "#F9F9F9" },
+            }}
+          />
+          <Stack.Screen
+            name="settings"
+            options={{
+              headerShown: true,
+              headerTitle: "Settings",
+              headerTitleStyle: {
+                fontFamily: "Caveat_700Bold",
+                fontSize: 28,
+                color: "#4A3728",
+              },
+              headerTintColor: "#4A3728",
+              headerBackTitle: "",
+
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: "#F9F9F9" },
+            }}
+          />
         </Stack>
       </ClerkLoaded>
     </ClerkProvider>
