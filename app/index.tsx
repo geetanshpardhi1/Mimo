@@ -2,12 +2,13 @@ import { storage } from "@/lib/storage";
 import { useAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, View, useColorScheme } from "react-native";
 
 export default function SplashScreen() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
+  const colorScheme = useColorScheme();
 
   useEffect(() => {
     checkOnboarding();
@@ -34,12 +35,28 @@ export default function SplashScreen() {
     return () => clearTimeout(timer);
   }, [isLoaded, isSignedIn, isFirstTime]);
 
+  const isDark = colorScheme === "dark";
+
   return (
-    <View className="flex-1 items-center justify-center bg-[#FDFBF7]">
-      <Text className="text-5xl font-light text-[#2D2D2D] mb-8 tracking-widest">
-        Mimo
+    <View
+      className="flex-1 items-center justify-center"
+      style={{ backgroundColor: isDark ? "#000000" : "#FFFFFF" }}
+    >
+      <Text
+        style={{
+          fontFamily: "Caveat_700Bold",
+          fontSize: 72,
+          color: isDark ? "#FFFFFF" : "#2D2D2D",
+          paddingHorizontal: 20,
+        }}
+      >
+        MIMO
       </Text>
-      <ActivityIndicator size="small" color="#8B6D5C" />
+      <ActivityIndicator
+        size="small"
+        color={isDark ? "#CCCCCC" : "#666666"}
+        style={{ marginTop: 24 }}
+      />
     </View>
   );
 }
