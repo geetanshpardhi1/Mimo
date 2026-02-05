@@ -1,7 +1,10 @@
+import { useMemoryApi, type Memory } from "@/lib/api/memories";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   RefreshControl,
   ScrollView,
   Text,
@@ -10,54 +13,45 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Hardcoded data for memories
-const MEMORIES = [
-  {
-    id: 1,
-    date: "12 MARCH",
-    content:
-      "Discipline is doing what needs to be done, even if you don't want to do it.",
-    tags: ["Gym", "Motivated"],
-  },
-  {
-    id: 2,
-    date: "10 MARCH",
-    content:
-      "The coffee at the new corner shop was surprisingly good. Met an old friend there.",
-    tags: ["Travel", "Nostalgic"],
-  },
-  {
-    id: 3,
-    date: "08 MARCH",
-    content: "Finally finished reading 'The Alchemist'. What a journey!",
-    tags: ["Reading", "Peaceful"],
-  },
-  {
-    id: 4,
-    date: "05 MARCH",
-    content: "A beautiful sunset by the bay. Colors I've never seen before.",
-    tags: ["Nature"],
-  },
-  {
-    id: 5,
-    date: "01 MARCH",
-    content:
-      "Started the new project today. Feeling a bit overwhelmed but excited.",
-    tags: ["Work", "Anxious"],
-  },
-];
-
 export default function MemoriesScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const memoryApi = useMemoryApi();
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
+  const loadMemories = async () => {
+    try {
+      const data = await memoryApi.getAll();
+      setMemories(data);
+    } catch (error) {
+      console.error("Error loading memories:", error);
+      Alert.alert("Error", "Failed to load memories");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMemories();
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadMemories();
+    setRefreshing(false);
+  }, []);
+
+  // Helper to format date like "12 MARCH"
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+      })
+      .toUpperCase();
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F9F9F9]">
@@ -81,46 +75,69 @@ export default function MemoriesScreen() {
           </Text>
         </View>
 
-        {/* Memories List */}
-        <View className="gap-4">
-          {MEMORIES.map((memory) => (
-            <TouchableOpacity
-              key={memory.id}
-              activeOpacity={0.9}
-              onPress={() => router.push(`/memory/${memory.id}`)}
-              className="bg-white rounded-[24px] p-6 shadow-sm shadow-gray-200 border border-gray-100"
-            >
-              {/* Card Header: Date & Menu */}
-              <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-[#9CA3AF] text-xs font-bold tracking-widest uppercase">
-                  {memory.date}
+        {/* Loading State */}
+        {loading ? (
+          <View className="items-center justify-center py-20">
+            <ActivityIndicator size="large" color="#5C4033" />
+            <Text className="text-gray-500 mt-4">Loading memories...</Text>
+          </View>
+        ) : memories.length === 0 ? (
+          /* Empty State */
+          <View className="items-center justify-center py-20">
+            <FontAwesome name="book" size={48} color="#D1D5DB" />
+            <Text className="text-gray-500 text-lg mt-4 font-caveat">
+              No memories yet
+            </Text>
+            <Text className="text-gray-400 text-sm mt-2">
+              Save your first memory from the Save tab
+            </Text>
+          </View>
+        ) : (
+          /* Memories List */
+          <View className="gap-4">
+            {memories.map((memory) => (
+              <TouchableOpacity
+                key={memory.id}
+                activeOpacity={0.9}
+                onPress={() => router.push(`/memory/${memory.id}`)}
+                className="bg-white rounded-[24px] p-6 shadow-sm shadow-gray-200 border border-gray-100"
+              >
+                {/* Card Header: Date & Menu */}
+                <View className="flex-row justify-between items-center mb-3">
+                  <Text className="text-[#9CA3AF] text-xs font-bold tracking-widest uppercase">
+                    {formatDate(memory.created_at)}
+                  </Text>
+                  <TouchableOpacity>
+                    <FontAwesome name="ellipsis-h" size={14} color="#D1D5DB" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Memory Content */}
+                <Text className="text-gray-800 text-lg font-medium leading-6 mb-4">
+                  {memory.summary || memory.raw_text}
                 </Text>
-                <TouchableOpacity>
-                  <FontAwesome name="ellipsis-h" size={14} color="#D1D5DB" />
-                </TouchableOpacity>
-              </View>
 
-              {/* Memory Content */}
-              <Text className="text-gray-800 text-lg font-medium leading-6 mb-4">
-                {memory.content}
-              </Text>
-
-              {/* Tags */}
-              <View className="flex-row gap-2 flex-wrap">
-                {memory.tags.map((tag, index) => (
-                  <View
-                    key={index}
-                    className="bg-[#F3F4F6] rounded-full px-4 py-1.5"
-                  >
-                    <Text className="text-gray-500 text-xs font-semibold">
-                      {tag}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+                {/* Tags */}
+                <View className="flex-row gap-2 flex-wrap">
+                  {memory.context && (
+                    <View className="bg-[#F3F4F6] rounded-full px-4 py-1.5">
+                      <Text className="text-gray-500 text-xs font-semibold">
+                        {memory.context}
+                      </Text>
+                    </View>
+                  )}
+                  {memory.mood && (
+                    <View className="bg-[#F3F4F6] rounded-full px-4 py-1.5">
+                      <Text className="text-gray-500 text-xs font-semibold">
+                        {memory.mood}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,3 +1,4 @@
+import { useMemoryApi } from "@/lib/api/memories";
 import { storage } from "@/lib/storage";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -20,6 +21,8 @@ export default function SaveScreen() {
   const router = useRouter();
   const [memory, setMemory] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const memoryApi = useMemoryApi();
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -52,6 +55,41 @@ export default function SaveScreen() {
         year: "numeric",
       })
       .toUpperCase();
+  };
+
+  const handleSaveMemory = async () => {
+    if (!memory.trim()) {
+      Alert.alert("Empty Memory", "Please enter a memory before saving");
+      return;
+    }
+
+    if (memory.length > 5000) {
+      Alert.alert(
+        "Memory Too Long",
+        "Memory must be less than 5000 characters",
+      );
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await memoryApi.create({ raw_text: memory });
+      Alert.alert("Success", "Memory saved successfully!");
+      setMemory(""); // Clear input
+    } catch (error) {
+      console.error("Error saving memory:", error);
+      if (error instanceof Error && error.message.includes("JWT")) {
+        Alert.alert(
+          "Session Expired",
+          "Your session has expired. Please sign in again.",
+        );
+        handleSignOut();
+      } else {
+        Alert.alert("Error", "Failed to save memory. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -94,6 +132,7 @@ export default function SaveScreen() {
             textAlignVertical="top"
             value={memory}
             onChangeText={setMemory}
+            editable={!saving}
           />
         </View>
 
@@ -118,13 +157,14 @@ export default function SaveScreen() {
         <View className="items-center mb-6">
           <TouchableOpacity
             className="bg-[#5C4033] rounded-full py-5 px-16 flex-row items-center shadow-lg shadow-orange-900/20"
-            onPress={() => console.log("Save memory")}
+            onPress={handleSaveMemory}
+            disabled={saving}
           >
             <View className="bg-white rounded-full p-1 mr-3">
               <FontAwesome name="plus" size={18} color="#5C4033" />
             </View>
             <Text className="text-white text-xl font-semibold">
-              Save Memory
+              {saving ? "Saving..." : "Save Memory"}
             </Text>
           </TouchableOpacity>
         </View>
