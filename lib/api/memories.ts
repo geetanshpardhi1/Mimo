@@ -30,7 +30,7 @@ export type CreateMemoryInput = {
  */
 export function useMemoryApi() {
   const supabase = useSupabase();
-  const { userId } = useAuth();
+  const { userId, getToken } = useAuth();
 
   return {
     /**
@@ -61,17 +61,33 @@ export function useMemoryApi() {
      * This calls the Edge Function to generate AI content asynchronously
      */
     async processWithAI(memoryId: string, rawText: string): Promise<void> {
-      const { error } = await supabase.functions.invoke("process-memory", {
-        body: {
-          memory_id: memoryId,
-          raw_text: rawText,
-        },
-      });
+      try {
+        console.log(`🧠 Triggering AI processing for memory: ${memoryId}`);
+        const token = await getToken();
+        
+        if (!token) {
+            console.error("❌ No auth token available for AI processing");
+            return;
+        }
 
-      if (error) {
-        console.error("AI processing error:", error);
-        // Don't throw - AI processing failure shouldn't block the save
-        // The memory is already saved, AI is a background enhancement
+        const { data, error } = await supabase.functions.invoke("process-memory", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: {
+            memory_id: memoryId,
+            raw_text: rawText,
+          },
+        });
+
+        if (error) {
+          console.error("❌ Edge Function Error:", error);
+          if (error instanceof Error) console.error("Message:", error.message);
+        } else {
+            console.log("✅ AI Processing initiated successfully", data);
+        }
+      } catch (e) {
+        console.error("❌ Exception calling Edge Function:", e);
       }
     },
 
@@ -96,6 +112,39 @@ export function useMemoryApi() {
         .from("memories")
         .select("*")
         .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data as Memory;
+    },
+
+    /**
+     * Delete a memory by ID
+     */
+    async delete(id: string): Promise<void> {
+      const { error } = await supabase
+        .from("memories")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+
+    /**
+     * Update a memory
+     */
+    async update(id: string, input: Partial<CreateMemoryInput>): Promise<Memory> {
+      const { data, error } = await supabase
+        .from("memories")
+        .update({
+          raw_text: input.raw_text,
+          context: input.context,
+          mood: input.mood,
+          // If text changes, we might want to re-process AI, but let's keep it simple for now
+          // or we can nullify summary/embedding?
+        })
+        .eq("id", id)
+        .select()
         .single();
 
       if (error) throw error;
