@@ -73,8 +73,17 @@ export default function SaveScreen() {
 
     setSaving(true);
     try {
-      await memoryApi.create({ raw_text: memory });
-      Alert.alert("Success", "Memory saved successfully!");
+      const savedMemory = await memoryApi.create({ raw_text: memory });
+
+      // Trigger AI processing in the background (non-blocking)
+      // This generates summary and embeddings asynchronously
+      memoryApi
+        .processWithAI(savedMemory.id, savedMemory.raw_text)
+        .catch((err) => {
+          console.log("AI processing will continue in background:", err);
+        });
+
+      Alert.alert("Success", "Memory saved! AI is processing...");
       setMemory(""); // Clear input
     } catch (error) {
       console.error("Error saving memory:", error);

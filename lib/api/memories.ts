@@ -12,6 +12,7 @@ export type Memory = {
   context?: string | null;
   mood?: string | null;
   created_at: string;
+  embedding?: number[] | null;
 };
 
 /**
@@ -53,6 +54,25 @@ export function useMemoryApi() {
 
       if (error) throw error;
       return data as Memory;
+    },
+
+    /**
+     * Process a memory with AI to generate summary and embeddings
+     * This calls the Edge Function to generate AI content asynchronously
+     */
+    async processWithAI(memoryId: string, rawText: string): Promise<void> {
+      const { error } = await supabase.functions.invoke("process-memory", {
+        body: {
+          memory_id: memoryId,
+          raw_text: rawText,
+        },
+      });
+
+      if (error) {
+        console.error("AI processing error:", error);
+        // Don't throw - AI processing failure shouldn't block the save
+        // The memory is already saved, AI is a background enhancement
+      }
     },
 
     /**

@@ -19,20 +19,10 @@ export function useSupabase(): SupabaseClient {
 
   const supabase = useMemo(() => {
     return createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        // Use the accessToken pattern as per Supabase-Clerk docs
-        // This is different from the Authorization header approach
-        fetch: async (url, options = {}) => {
-          const clerkToken = await getToken();
-
-          const headers = new Headers(options?.headers);
-          headers.set("Authorization", `Bearer ${clerkToken}`);
-
-          return fetch(url, {
-            ...options,
-            headers,
-          });
-        },
+      // Use accessToken pattern for third-party JWTs
+      accessToken: async () => {
+        const clerkToken = await getToken();
+        return clerkToken ?? null;
       },
       auth: {
         // Disable Supabase Auth since we're using Clerk

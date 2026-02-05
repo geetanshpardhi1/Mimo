@@ -34,7 +34,6 @@ web-build/
 # Expo
 # ===========================
 .expo/
-expo-env.d.ts
 
 # ===========================
 # Mobile - Native (Managed Workflow - Prebuild)
@@ -94,10 +93,11 @@ Desktop.ini
 # Debug files
 supabase/debug/
 supabase/.temp/
+supabase/.env
+supabase/.env.local
 
 # Local Supabase development (if using Supabase CLI locally)
 supabase/.branches/
-supabase/.temp/
 .supabase/
 
 # ===========================
