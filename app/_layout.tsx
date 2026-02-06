@@ -82,6 +82,23 @@ export default function RootLayout() {
               headerStyle: { backgroundColor: "#F9F9F9" },
             }}
           />
+          <Stack.Screen
+            name="manage-account"
+            options={{
+              headerShown: true,
+              headerTitle: "Manage Account",
+              headerTitleStyle: {
+                fontFamily: "Caveat_700Bold",
+                fontSize: 28,
+                color: "#4A3728",
+              },
+              headerTintColor: "#4A3728",
+              headerBackTitle: "",
+
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: "#F9F9F9" },
+            }}
+          />
         </Stack>
       </ClerkLoaded>
     </ClerkProvider>

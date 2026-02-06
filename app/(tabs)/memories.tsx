@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ScrollView,
   Text,
+  TextInput,
   Pressable,
   TouchableOpacity,
   View,
@@ -19,6 +20,7 @@ export default function MemoriesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
   const memoryApi = useMemoryApi();
 
   const loadMemories = async () => {
@@ -54,6 +56,22 @@ export default function MemoriesScreen() {
       .toUpperCase();
   };
 
+  const filteredMemories = memories.filter((memory) => {
+    if (!searchText.trim()) return true;
+    const needle = searchText.trim().toLowerCase();
+    const haystack = [
+      memory.summary,
+      memory.raw_text,
+      memory.context,
+      memory.mood,
+      formatDate(memory.created_at),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(needle);
+  });
+
   return (
     <SafeAreaView className="flex-1 bg-[#F9F9F9]">
       <ScrollView
@@ -83,6 +101,44 @@ export default function MemoriesScreen() {
           ) : null}
         </View>
 
+        {/* Search */}
+        {!loading && memories.length > 0 && (
+          <View className="mb-6">
+            <View className="flex-row items-center bg-white border border-gray-100 rounded-2xl px-4 py-3">
+              <FontAwesome name="search" size={14} color="#9CA3AF" />
+              <TextInput
+                className="flex-1 ml-3 text-base text-gray-800"
+                placeholder="Search memories"
+                placeholderTextColor="#9CA3AF"
+                value={searchText}
+                onChangeText={setSearchText}
+                returnKeyType="search"
+              />
+              {searchText.trim().length > 0 ? (
+                <Pressable
+                  onPress={() => setSearchText("")}
+                  className="ml-2 h-6 w-6 items-center justify-center rounded-full bg-[#F3F4F6]"
+                  android_ripple={{ color: "#E5E7EB" }}
+                  style={({ pressed }) => [
+                    { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                    { opacity: pressed ? 0.9 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                >
+                  <FontAwesome name="times" size={12} color="#9CA3AF" />
+                </Pressable>
+              ) : null}
+            </View>
+
+            {searchText.trim().length > 0 && (
+              <Text className="text-xs text-[#6B7280] mt-2">
+                Showing {filteredMemories.length} of {memories.length}
+              </Text>
+            )}
+          </View>
+        )}
+
         {/* Loading State */}
         {loading ? (
           <View className="items-center justify-center py-20">
@@ -103,7 +159,7 @@ export default function MemoriesScreen() {
         ) : (
           /* Memories List */
           <View className="gap-4">
-            {memories.map((memory) => (
+            {filteredMemories.map((memory) => (
               <Pressable
                 key={memory.id}
                 onPress={() => router.push(`/memory/${memory.id}`)}
@@ -151,6 +207,18 @@ export default function MemoriesScreen() {
                 </View>
               </Pressable>
             ))}
+
+            {filteredMemories.length === 0 && (
+              <View className="items-center justify-center py-16 bg-white rounded-[24px] border border-gray-100">
+                <FontAwesome name="search" size={28} color="#D1D5DB" />
+                <Text className="text-gray-600 text-base font-medium mt-3">
+                  No results found
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1">
+                  Try a different keyword
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>

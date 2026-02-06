@@ -13,7 +13,7 @@ export default function AccountScreen() {
       <View className="flex-1 px-6 pt-4">
         {/* Header */}
         <View className="items-center mb-10">
-          <Text className="font-caveat text-5xl text-[#4A3728]">Account</Text>
+          <Text className="font-caveat text-5xl text-[#4A3728] px-2">Account</Text>
         </View>
 
         {/* Profile Section */}
@@ -22,7 +22,7 @@ export default function AccountScreen() {
             <Image source={{ uri: user?.imageUrl }} className="w-full h-full" />
           </View>
           <Text className="text-2xl font-bold text-[#1F2937] mb-1">
-            {user?.fullName}
+            {user?.fullName || "Your name"}
           </Text>
           <Text className="text-[#6B7280] text-base">
             {user?.primaryEmailAddress?.emailAddress}
@@ -30,10 +30,20 @@ export default function AccountScreen() {
         </View>
 
         {/* Menu Options */}
-        <View className="items-center mt-8">
+        <View className="items-center gap-4 mt-4">
+          <TouchableOpacity
+            onPress={() => router.push("/manage-account")}
+            className="bg-[#5C4033] rounded-full py-5 px-6 flex-row items-center justify-center shadow-lg shadow-orange-900/20 w-full"
+          >
+            <View className="bg-white rounded-full p-1 mr-3">
+              <FontAwesome name="user" size={18} color="#5C4033" />
+            </View>
+            <Text className="text-white text-xl font-semibold">Manage Account</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => router.push("/settings")}
-            className="bg-[#5C4033] rounded-full py-5 px-16 flex-row items-center shadow-lg shadow-orange-900/20"
+            className="bg-[#5C4033] rounded-full py-5 px-6 flex-row items-center justify-center shadow-lg shadow-orange-900/20 w-full"
           >
             <View className="bg-white rounded-full p-1 mr-3">
               <FontAwesome name="cog" size={18} color="#5C4033" />
