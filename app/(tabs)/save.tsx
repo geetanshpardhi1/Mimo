@@ -8,18 +8,25 @@ import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Alert,
+  LayoutAnimation,
   RefreshControl,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   View,
   KeyboardAvoidingView,
   Platform,
+  UIManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SaveScreen() {
+  if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -84,6 +91,7 @@ export default function SaveScreen() {
   };
 
   const handleContextSelect = (selected: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selected === "Custom...") {
       setIsContextCustom(true);
       setContext("");
@@ -95,7 +103,27 @@ export default function SaveScreen() {
     }
   };
 
+  const clearContext = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setContext("");
+    setIsContextCustom(false);
+    setShowContexts(true);
+  };
+
+  const handleContextPresetPress = (selected: string) => {
+    if (selected === context) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setContext("");
+      setIsContextCustom(false);
+      setShowContexts(true);
+      return;
+    }
+
+    handleContextSelect(selected);
+  };
+
   const handleMoodSelect = (selected: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selected === "Custom...") {
       setIsMoodCustom(true);
       setMood("");
@@ -105,6 +133,25 @@ export default function SaveScreen() {
       setIsMoodCustom(false);
       setShowMoods(false);
     }
+  };
+
+  const clearMood = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setMood("");
+    setIsMoodCustom(false);
+    setShowMoods(true);
+  };
+
+  const handleMoodPresetPress = (selected: string) => {
+    if (selected === mood) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setMood("");
+      setIsMoodCustom(false);
+      setShowMoods(true);
+      return;
+    }
+
+    handleMoodSelect(selected);
   };
 
   const handleSaveMemory = async () => {
@@ -166,7 +213,7 @@ export default function SaveScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerClassName="flex-grow justify-center px-6 py-4"
+          contentContainerClassName="flex-grow px-6 py-4"
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
@@ -212,40 +259,61 @@ export default function SaveScreen() {
           <View className="w-full mb-4">
             {!isContextCustom ? (
               <>
-                <TouchableOpacity
-                  className={`flex-row items-center px-6 py-4 rounded-full ${
-                    context ? "bg-[#5C4033]" : "bg-[#F3F4F6]"
-                  }`}
-                  onPress={() => setShowContexts(!showContexts)}
-                >
-                  <FontAwesome
-                    name={context ? "check" : "plus"}
-                    size={18}
-                    color={context ? "white" : "#6B7280"}
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text
-                    className={`text-lg font-medium ${
-                      context ? "text-white" : "text-gray-700"
+                <View className="flex-row items-center">
+                  <Pressable
+                    className={`flex-1 flex-row items-center justify-between px-6 py-4 rounded-full ${
+                      context ? "bg-[#5C4033]" : "bg-[#F3F4F6]"
                     }`}
+                    onPress={() => {
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    setShowContexts((prev) => !prev);
+                    setShowMoods(false);
+                  }}
+                    android_ripple={{ color: "#6B7280" }}
+                    style={({ pressed }) => [
+                      { transform: [{ scale: pressed ? 0.99 : 1 }] },
+                      { opacity: pressed ? 0.9 : 1 },
+                    ]}
+                    accessibilityRole="button"
                   >
-                    {context || "Where or what situation?"}
-                  </Text>
-                </TouchableOpacity>
-
-                {showContexts && (
-                  <View className="flex-row flex-wrap gap-2 mt-4">
-                    {CONTEXT_PRESETS.map((preset) => (
-                      <TouchableOpacity
-                        key={preset}
-                        onPress={() => handleContextSelect(preset)}
-                        className="bg-white border border-gray-300 px-4 py-3 rounded-xl"
+                    <View className="flex-row items-center flex-1 pr-3">
+                      <FontAwesome
+                        name={context ? "check" : "plus"}
+                        size={18}
+                        color={context ? "white" : "#6B7280"}
+                        style={{ marginRight: 12 }}
+                      />
+                      <Text
+                        className={`text-lg font-medium ${
+                          context ? "text-white" : "text-gray-700"
+                        }`}
                       >
-                        <Text className="text-gray-800 font-medium">{preset}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                        {context || "Where or what situation?"}
+                      </Text>
+                    </View>
+                    <FontAwesome
+                      name={showContexts ? "chevron-up" : "chevron-down"}
+                      size={14}
+                      color={context ? "white" : "#6B7280"}
+                    />
+                  </Pressable>
+
+                  {context ? (
+                    <Pressable
+                      onPress={clearContext}
+                      className="ml-3 h-11 w-11 items-center justify-center rounded-full bg-[#F3F4F6]"
+                      android_ripple={{ color: "#6B7280" }}
+                      style={({ pressed }) => [
+                        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                        { opacity: pressed ? 0.9 : 1 },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear selected context"
+                    >
+                      <FontAwesome name="times" size={16} color="#6B7280" />
+                    </Pressable>
+                  ) : null}
+                </View>
               </>
             ) : (
               <View className="bg-[#F3F4F6] rounded-2xl p-4">
@@ -263,6 +331,7 @@ export default function SaveScreen() {
                 />
                 <TouchableOpacity
                   onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                     setIsContextCustom(false);
                     setShowContexts(true);
                   }}
@@ -274,46 +343,115 @@ export default function SaveScreen() {
                 </TouchableOpacity>
               </View>
             )}
+
+            {showContexts && !isContextCustom && (
+              <View className="mt-4">
+                <Text className="text-xs text-[#6B7280] mb-2">
+                  Choose one option or tap the X to clear.
+                </Text>
+                <View className="flex-row flex-wrap justify-between mt-3">
+                  {CONTEXT_PRESETS.map((preset) => {
+                    const isSelected = preset === context;
+                    return (
+                      <Pressable
+                        key={preset}
+                        onPress={() => handleContextPresetPress(preset)}
+                        android_ripple={{ color: "#F3F4F6" }}
+                        style={({ pressed }) => [
+                          { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                          { opacity: pressed ? 0.9 : 1 },
+                        ]}
+                        className={`w-[48%] min-h-[52px] flex-row items-center px-3 py-3 rounded-2xl border overflow-hidden mb-3 ${
+                          isSelected
+                            ? "bg-[#5C4033] border-[#5C4033]"
+                            : "bg-white border-gray-300"
+                        }`}
+                        accessibilityRole="button"
+                        hitSlop={4}
+                      >
+                        {isSelected && (
+                          <FontAwesome
+                            name="check"
+                            size={14}
+                            color="white"
+                            style={{ marginRight: 8 }}
+                          />
+                        )}
+                        <Text
+                          numberOfLines={2}
+                          className={`font-medium ${
+                            isSelected ? "text-white" : "text-gray-800"
+                          }`}
+                        >
+                          {preset}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Mood Section */}
           <View className="w-full mb-12">
             {!isMoodCustom ? (
               <>
-                <TouchableOpacity
-                  className={`flex-row items-center px-6 py-4 rounded-full ${
-                    mood ? "bg-[#5C4033]" : "bg-[#F3F4F6]"
-                  }`}
-                  onPress={() => setShowMoods(!showMoods)}
-                >
-                  <FontAwesome
-                    name={mood ? "check" : "plus"}
-                    size={18}
-                    color={mood ? "white" : "#6B7280"}
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text
-                    className={`text-lg font-medium ${
-                      mood ? "text-white" : "text-gray-700"
+                <View className="flex-row items-center">
+                  <Pressable
+                    className={`flex-1 flex-row items-center justify-between px-6 py-4 rounded-full ${
+                      mood ? "bg-[#5C4033]" : "bg-[#F3F4F6]"
                     }`}
+                    onPress={() => {
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    setShowMoods((prev) => !prev);
+                    setShowContexts(false);
+                  }}
+                    android_ripple={{ color: "#6B7280" }}
+                    style={({ pressed }) => [
+                      { transform: [{ scale: pressed ? 0.99 : 1 }] },
+                      { opacity: pressed ? 0.9 : 1 },
+                    ]}
+                    accessibilityRole="button"
                   >
-                    {mood || "How are you feeling?"}
-                  </Text>
-                </TouchableOpacity>
-
-                {showMoods && (
-                  <View className="flex-row flex-wrap gap-2 mt-4">
-                    {MOOD_PRESETS.map((preset) => (
-                      <TouchableOpacity
-                        key={preset}
-                        onPress={() => handleMoodSelect(preset)}
-                        className="bg-white border border-gray-300 px-4 py-3 rounded-xl"
+                    <View className="flex-row items-center flex-1 pr-3">
+                      <FontAwesome
+                        name={mood ? "check" : "plus"}
+                        size={18}
+                        color={mood ? "white" : "#6B7280"}
+                        style={{ marginRight: 12 }}
+                      />
+                      <Text
+                        className={`text-lg font-medium ${
+                          mood ? "text-white" : "text-gray-700"
+                        }`}
                       >
-                        <Text className="text-gray-800 font-medium">{preset}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                        {mood || "How are you feeling?"}
+                      </Text>
+                    </View>
+                    <FontAwesome
+                      name={showMoods ? "chevron-up" : "chevron-down"}
+                      size={14}
+                      color={mood ? "white" : "#6B7280"}
+                    />
+                  </Pressable>
+
+                  {mood ? (
+                    <Pressable
+                      onPress={clearMood}
+                      className="ml-3 h-11 w-11 items-center justify-center rounded-full bg-[#F3F4F6]"
+                      android_ripple={{ color: "#6B7280" }}
+                      style={({ pressed }) => [
+                        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                        { opacity: pressed ? 0.9 : 1 },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear selected mood"
+                    >
+                      <FontAwesome name="times" size={16} color="#6B7280" />
+                    </Pressable>
+                  ) : null}
+                </View>
               </>
             ) : (
               <View className="bg-[#F3F4F6] rounded-2xl p-4">
@@ -331,6 +469,7 @@ export default function SaveScreen() {
                 />
                 <TouchableOpacity
                   onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                     setIsMoodCustom(false);
                     setShowMoods(true);
                   }}
@@ -342,23 +481,78 @@ export default function SaveScreen() {
                 </TouchableOpacity>
               </View>
             )}
+
+            {showMoods && !isMoodCustom && (
+              <View className="mt-4">
+                <Text className="text-xs text-[#6B7280] mb-2">
+                  Choose one option or tap the X to clear.
+                </Text>
+                <View className="flex-row flex-wrap justify-between mt-3">
+                  {MOOD_PRESETS.map((preset) => {
+                    const isSelected = preset === mood;
+                    return (
+                      <Pressable
+                        key={preset}
+                        onPress={() => handleMoodPresetPress(preset)}
+                        android_ripple={{ color: "#F3F4F6" }}
+                        style={({ pressed }) => [
+                          { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                          { opacity: pressed ? 0.9 : 1 },
+                        ]}
+                        className={`w-[48%] min-h-[52px] flex-row items-center px-3 py-3 rounded-2xl border overflow-hidden mb-3 ${
+                          isSelected
+                            ? "bg-[#5C4033] border-[#5C4033]"
+                            : "bg-white border-gray-300"
+                        }`}
+                        accessibilityRole="button"
+                        hitSlop={4}
+                      >
+                        {isSelected && (
+                          <FontAwesome
+                            name="check"
+                            size={14}
+                            color="white"
+                            style={{ marginRight: 8 }}
+                          />
+                        )}
+                        <Text
+                          numberOfLines={2}
+                          className={`font-medium ${
+                            isSelected ? "text-white" : "text-gray-800"
+                          }`}
+                        >
+                          {preset}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Save Button */}
           <View className="items-center mb-6">
-            <TouchableOpacity
+            <Pressable
               className="bg-[#5C4033] rounded-full py-5 px-16 flex-row items-center shadow-lg shadow-orange-900/20"
               onPress={handleSaveMemory}
               disabled={saving}
+              android_ripple={{ color: "#6B7280" }}
+              style={({ pressed }) => [
+                { transform: [{ scale: pressed && !saving ? 0.98 : 1 }] },
+                { opacity: saving ? 0.6 : pressed ? 0.9 : 1 },
+              ]}
+              accessibilityRole="button"
             >
-              <View className="bg-white rounded-full p-1 mr-3">
-                <FontAwesome name="plus" size={18} color="#5C4033" />
+              <View className="bg-white rounded-full p-2 mr-3">
+                <FontAwesome name="bookmark" size={16} color="#5C4033" />
               </View>
               <Text className="text-white text-xl font-semibold">
                 {saving ? "Saving..." : "Save Memory"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

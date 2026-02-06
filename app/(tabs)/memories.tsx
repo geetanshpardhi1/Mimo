@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ScrollView,
   Text,
+  Pressable,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -66,13 +67,20 @@ export default function MemoriesScreen() {
         }
       >
         {/* Header */}
-        <View className="items-center mb-10 ">
+        <View className="items-center mb-8">
           <Text className="font-caveat text-5xl text-[#4A3728] px-1">
             Your Memories
           </Text>
           <Text className="text-[#6B7280] text-sm font-medium mt-1">
             Everything you've saved
           </Text>
+          {!loading && memories.length > 0 ? (
+            <View className="mt-3 bg-white border border-gray-100 rounded-full px-4 py-1.5">
+              <Text className="text-xs text-[#6B7280] font-semibold tracking-widest uppercase">
+                {memories.length} {memories.length === 1 ? "Memory" : "Memories"}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Loading State */}
@@ -96,45 +104,52 @@ export default function MemoriesScreen() {
           /* Memories List */
           <View className="gap-4">
             {memories.map((memory) => (
-              <TouchableOpacity
+              <Pressable
                 key={memory.id}
-                activeOpacity={0.9}
                 onPress={() => router.push(`/memory/${memory.id}`)}
                 className="bg-white rounded-[24px] p-6 shadow-sm shadow-gray-200 border border-gray-100"
+                android_ripple={{ color: "#F3F4F6" }}
+                style={({ pressed }) => [
+                  { transform: [{ scale: pressed ? 0.99 : 1 }] },
+                  { opacity: pressed ? 0.95 : 1 },
+                ]}
+                accessibilityRole="button"
               >
                 {/* Card Header: Date & Menu */}
                 <View className="flex-row justify-between items-center mb-3">
-                  <Text className="text-[#9CA3AF] text-xs font-bold tracking-widest uppercase">
-                    {formatDate(memory.created_at)}
-                  </Text>
-                  <TouchableOpacity>
-                    <FontAwesome name="ellipsis-h" size={14} color="#D1D5DB" />
-                  </TouchableOpacity>
+                  <View className="flex-row items-center">
+                    <Text className="text-[#9CA3AF] text-xs font-bold tracking-widest uppercase">
+                      {formatDate(memory.created_at)}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Memory Content */}
-                <Text className="text-gray-800 text-lg font-medium leading-6 mb-4">
+                <Text
+                  numberOfLines={3}
+                  className="text-gray-800 text-lg font-medium leading-6 mb-4"
+                >
                   {memory.summary || memory.raw_text}
                 </Text>
 
                 {/* Tags */}
                 <View className="flex-row gap-2 flex-wrap">
                   {memory.context && (
-                    <View className="bg-[#F3F4F6] rounded-full px-4 py-1.5">
-                      <Text className="text-gray-500 text-xs font-semibold">
+                    <View className="bg-[#F6EFE9] rounded-full px-4 py-1.5 border border-[#E8DDD3]">
+                      <Text className="text-[#6B4A3A] text-xs font-semibold">
                         {memory.context}
                       </Text>
                     </View>
                   )}
                   {memory.mood && (
-                    <View className="bg-[#F3F4F6] rounded-full px-4 py-1.5">
-                      <Text className="text-gray-500 text-xs font-semibold">
+                    <View className="bg-[#EEF2F3] rounded-full px-4 py-1.5 border border-[#DCE3E6]">
+                      <Text className="text-[#4B5B5F] text-xs font-semibold">
                         {memory.mood}
                       </Text>
                     </View>
                   )}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
