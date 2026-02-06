@@ -1,3 +1,5 @@
+// lib/api/memories.ts
+
 import { useSupabase } from "@/lib/supabase";
 import { useAuth } from "@clerk/clerk-expo";
 
@@ -22,6 +24,35 @@ export type CreateMemoryInput = {
   raw_text: string;
   context?: string;
   mood?: string;
+};
+
+/**
+ * Search result type with similarity score
+ */
+export type SearchResult = {
+  id: string;
+  raw_text: string;
+  summary: string | null;
+  context?: string | null;
+  mood?: string | null;
+  created_at: string;
+  similarity: number;
+  match_type: "temporal_semantic" | "semantic_only";
+};
+
+/**
+ * Search response type
+ */
+export type SearchResponse = {
+  success: boolean;
+  query: {
+    original: string;
+    semantic: string;
+    has_temporal: boolean;
+    date_range?: { start: string; end: string };
+  };
+  results: SearchResult[];
+  count: number;
 };
 
 /**
@@ -64,15 +95,15 @@ export function useMemoryApi() {
       try {
         console.log(`🧠 Triggering AI processing for memory: ${memoryId}`);
         const token = await getToken();
-        
+
         if (!token) {
-            console.error("❌ No auth token available for AI processing");
-            return;
+          console.error("❌ No auth token available for AI processing");
+          return;
         }
 
         const { data, error } = await supabase.functions.invoke("process-memory", {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: {
             memory_id: memoryId,
@@ -84,10 +115,46 @@ export function useMemoryApi() {
           console.error("❌ Edge Function Error:", error);
           if (error instanceof Error) console.error("Message:", error.message);
         } else {
-            console.log("✅ AI Processing initiated successfully", data);
+          console.log("✅ AI Processing initiated successfully", data);
         }
       } catch (e) {
         console.error("❌ Exception calling Edge Function:", e);
+      }
+    },
+
+    /**
+     * Search memories using natural language queries
+     * Supports both semantic search and temporal queries like "last Monday"
+     */
+    async search(query: string, limit: number = 20): Promise<SearchResponse> {
+      try {
+        console.log(`🔍 Searching memories for: "${query}"`);
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("User not authenticated");
+        }
+
+        const { data, error } = await supabase.functions.invoke("search-memories", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: {
+            query,
+            limit,
+          },
+        });
+
+        if (error) {
+          console.error("❌ Search Error:", error);
+          throw error;
+        }
+
+        console.log(`✅ Search complete: ${data.count} results`);
+        return data as SearchResponse;
+      } catch (e) {
+        console.error("❌ Exception during search:", e);
+        throw e;
       }
     },
 
@@ -122,11 +189,8 @@ export function useMemoryApi() {
      * Delete a memory by ID
      */
     async delete(id: string): Promise<void> {
-      const { error } = await supabase
-        .from("memories")
-        .delete()
-        .eq("id", id);
-      
+      const { error } = await supabase.from("memories").delete().eq("id", id);
+
       if (error) throw error;
     },
 
@@ -140,8 +204,6 @@ export function useMemoryApi() {
           raw_text: input.raw_text,
           context: input.context,
           mood: input.mood,
-          // If text changes, we might want to re-process AI, but let's keep it simple for now
-          // or we can nullify summary/embedding?
         })
         .eq("id", id)
         .select()
